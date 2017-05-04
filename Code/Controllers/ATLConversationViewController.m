@@ -1199,6 +1199,9 @@ static NSInteger const ATLPhotoActionSheet = 1000;
     if (conversation) return conversation;
     
     LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+    //poonam
+    conversationOptions.distinctByParticipants = YES;
+    //poonam
     conversationOptions.deliveryReceiptsEnabled = participants.count <= 5;
     conversation = [self.layerClient newConversationWithParticipants:participantIdentifiers options:conversationOptions error:nil];
     return conversation;
@@ -1255,6 +1258,8 @@ static NSInteger const ATLPhotoActionSheet = 1000;
     // ensure the animation's queue will resume
     if (self.collectionView) {
         dispatch_suspend(self.animationQueue);
+        if(self.collectionView.window != nil)
+        {
         [self.collectionView performBatchUpdates:^{
             for (ATLDataSourceChange *change in objectChanges) {
                 switch (change.type) {
@@ -1281,6 +1286,7 @@ static NSInteger const ATLPhotoActionSheet = 1000;
         } completion:^(BOOL finished) {
             dispatch_resume(self.animationQueue);
         }];
+        }
     }
     [self configureCollectionViewElements];
     

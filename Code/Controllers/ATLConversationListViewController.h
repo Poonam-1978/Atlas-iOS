@@ -19,13 +19,17 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <LayerKit/LayerKit.h>
+//#import <LayerKit/LayerKit.h>
+@import LayerKit;
 #import "ATLConversationTableViewCell.h"
 #import "ATLAvatarItem.h"
 #import "ATLParticipant.h"
 
 @class ATLConversationListViewController;
+@protocol ConversationDelegate
+-(void) btnDeleteClicked:(UIView *)ratingView rowno:(int)rowno;
 
+@end
 ///---------------------------------------
 /// @name Delegate
 ///---------------------------------------
@@ -189,6 +193,9 @@ NS_ASSUME_NONNULL_BEGIN
  @discussion If using storyboards, the property must be set explicitly.
  @raises NSInternalInconsistencyException Raised if the value is mutated after the receiver has been presented.
  */
+//poonam
+@property (nonatomic,strong) id <ConversationDelegate> conDelegate;
+//poonam
 @property (nonatomic) LYRClient *layerClient;
 
 /**

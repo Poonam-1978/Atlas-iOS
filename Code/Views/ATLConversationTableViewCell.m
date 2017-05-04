@@ -72,11 +72,11 @@ static NSDateFormatter *ATLShortTimeFormatter()
 @implementation ATLConversationTableViewCell
 
 static CGFloat const ATLConversationLabelTopPadding = 8.0f;
-static CGFloat const ATLDateLabelRightPadding = 32.0f;
+static CGFloat const ATLDateLabelRightPadding = 18.0f;
 static CGFloat const ATLLastMessageLabelRightPadding = 16;
 static CGFloat const ATLConversationTitleLabelRightPadding = 2.0f;
 static CGFloat const ATLUnreadMessageCountLabelSize = 14.0f;
-static CGFloat const ATLChevronIconViewRightPadding = 14.0f;
+static CGFloat const ATLChevronIconViewRightPadding = 12.0f;
 
 + (void)initialize
 {
@@ -89,7 +89,10 @@ static CGFloat const ATLChevronIconViewRightPadding = 14.0f;
     proxy.dateLabelFont = [UIFont systemFontOfSize:15];
     proxy.dateLabelColor = [UIColor grayColor];
     proxy.unreadMessageIndicatorBackgroundColor = ATLBlueColor();
-    proxy.cellBackgroundColor = [UIColor whiteColor];
+    //proxy.cellBackgroundColor = [UIColor whiteColor];
+    //poonam
+    proxy.cellBackgroundColor =  [UIColor colorWithRed:242.0/255 green:242.0/255 blue:242.0/255 alpha:1.0];
+    //poonam
 }
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
@@ -257,7 +260,12 @@ static CGFloat const ATLChevronIconViewRightPadding = 14.0f;
 
 - (void)presentConversation:(LYRConversation *)conversation
 {
-    self.dateLabel.text = [self dateLabelForLastMessage:conversation.lastMessage];
+    //poonam
+   // self.dateLabel.text = [self dateLabelForLastMessage:conversation.lastMessage];
+    NSString *strDate = [self dateLabelForLastMessage:conversation.lastMessage];
+    //    [NSString stringWithFormat: @"%@/%@/%@", words[0] ,words[1] ,words[2]];
+    self.dateLabel.font = [UIFont fontWithName:@"Fabrikat-BoldItalic" size:10];
+    self.dateLabel.text = strDate;
     [self updateUnreadMessageIndicatorWithConversation:conversation];
 }
 
@@ -298,6 +306,10 @@ static CGFloat const ATLChevronIconViewRightPadding = 14.0f;
 - (void)updateWithConversationTitle:(NSString *)conversationTitle
 {
     self.accessibilityLabel = conversationTitle;
+    //poonam
+    self.conversationTitleLabel.font = [UIFont fontWithName:@"Fabrikat-Bold" size:20];
+    self.conversationTitleLabel.textColor = [UIColor colorWithRed: 1.0/255.0 green: 184.0/255.0 blue: 202.0/255.0 alpha: 1.0];
+
     self.conversationTitleLabel.text = conversationTitle;
 }
 
@@ -358,7 +370,9 @@ static CGFloat const ATLChevronIconViewRightPadding = 14.0f;
 - (void)configureChevronIconViewConstraints
 {
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.chevronIconView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:-ATLChevronIconViewRightPadding]];
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.chevronIconView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.dateLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
+  //  [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.chevronIconView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.dateLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
+    
+     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.chevronIconView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
 }
 
 @end

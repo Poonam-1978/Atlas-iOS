@@ -214,7 +214,9 @@ static CGFloat const ATLMaxScrollDistanceFromBottom = 150;
     
     contentInset.top = CGRectGetMaxY(frame);
     scrollIndicatorInsets.top = contentInset.top;
-    self.collectionView.contentInset = contentInset;
+     //poonam
+    //  self.collectionView.contentInset = contentInset;
+    //poonam
     self.collectionView.scrollIndicatorInsets = scrollIndicatorInsets;
 }
 
@@ -294,7 +296,8 @@ static CGFloat const ATLMaxScrollDistanceFromBottom = 150;
     // Workaround for collection view cell sizes changing/animating when view is first pushed onscreen on iOS 8.
     if (CGRectEqualToRect(keyboardBeginFrameInView, keyboardEndFrameInView)) {
         [UIView performWithoutAnimation:^{
-            [self updateBottomCollectionViewInset];
+          //poonam
+          //  [self updateBottomCollectionViewInset];
         }];
         return;
     }

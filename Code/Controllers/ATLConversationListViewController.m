@@ -18,9 +18,11 @@
 //  limitations under the License.
 //
 
+#import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 #import "ATLConversationListViewController.h"
 #import "ATLMessagingUtilities.h"
+
 
 static NSString *const ATLConversationCellReuseIdentifier = @"ATLConversationCellReuseIdentifier";
 static NSString *const ATLImageMIMETypePlaceholderText = @"Attachment: Image";
@@ -31,6 +33,8 @@ static NSInteger const ATLConverstionListPaginationWindow = 30;
 static CGFloat const ATLConversationListLoadMoreConversationsDistanceThreshold = 200.0f;
 static CGFloat const ATLConversationListLoadingMoreConversationsIndicatorViewWidth = 30.0f;
 static CGFloat const ATLConversationListLoadingMoreConversationsIndicatorViewHeight = 30.0f;
+
+
 
 static UIView *ATLMakeLoadingMoreConversationsIndicatorView()
 {
@@ -48,19 +52,23 @@ static UIView *ATLMakeLoadingMoreConversationsIndicatorView()
 @property (nonatomic) BOOL hasAppeared;
 @property (nonatomic) BOOL showingMoreConversationsIndicator;
 @property (nonatomic, readwrite) UISearchController *searchController;
-@property (nonatomic) NSMutableArray *insertedRowIndexPaths;
-@property (nonatomic) NSMutableArray *deletedRowIndexPaths;
-@property (nonatomic) NSMutableArray *updatedRowIndexPaths;
+
 
 @end
 
 @implementation ATLConversationListViewController
 
-NSString *const ATLConversationListViewControllerTitle = @"Messages";
+NSString *const ATLConversationListViewControllerTitle = @"";
 NSString *const ATLConversationTableViewAccessibilityLabel = @"Conversation Table View";
 NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation Table View Identifier";
-NSString *const ATLConversationListViewControllerDeletionModeMyDevices = @"My Devices";
+NSString *const ATLConversationListViewControllerDeletionModeMyDevices = @"Delete";
 NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyone";
+UIView *ratingView;
+UIVisualEffectView *blurEffectView;
+NSIndexPath *indexpath;
+int delMode;
+
+
 
 + (instancetype)conversationListViewControllerWithLayerClient:(LYRClient *)layerClient
 {
@@ -119,13 +127,13 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 {
     [super viewDidLoad];
     
-    self.title = ATLLocalizedString(@"atl.conversationlist.title.key", ATLConversationListViewControllerTitle, nil);
+    self.title = ATLLocalizedString(@"", ATLConversationListViewControllerTitle, nil);
     self.accessibilityLabel = ATLConversationListViewControllerTitle;
     
     self.tableView.accessibilityLabel = ATLConversationTableViewAccessibilityLabel;
     self.tableView.accessibilityIdentifier = ATLConversationTableViewAccessibilityIdentifier;
     self.tableView.isAccessibilityElement = YES;
-    self.tableView.tableFooterView = [[UIView alloc] init];
+    [self configureLoadingMoreConversationsIndicatorView];
     [self.tableView registerClass:self.cellClass forCellReuseIdentifier:ATLConversationCellReuseIdentifier];
     
     if (self.shouldDisplaySearchController) {
@@ -133,7 +141,7 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
         self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
         self.searchController.searchResultsUpdater = self;
         self.searchController.dimsBackgroundDuringPresentation = NO;
-
+        
         // UISearchBar
         self.searchController.searchBar.delegate = self;
         self.searchController.searchBar.translucent = NO;
@@ -154,9 +162,6 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
     // Perform setup here so that our children can initialize via viewDidLoad
     if (!self.queryController) {
         [self setupConversationQueryController];
-    } else if (!self.queryController.delegate) {
-        self.queryController.delegate = self;
-        [self.tableView reloadData];
     }
     
     if (!self.hasAppeared) {
@@ -193,13 +198,13 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 
 - (void)viewWillDisappear:(BOOL)animated
 {
-    [super viewWillDisappear:animated];
     
-    self.queryController.delegate = nil;
+    [super viewWillDisappear:animated];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRClientDidAuthenticateNotification object:self.layerClient];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRClientDidDeauthenticateNotification object:self.layerClient];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRClientDidSwitchSessionNotification object:self.layerClient];
+    
 }
 
 - (void)dealloc
@@ -256,9 +261,9 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 
 - (void)addEditButton
 {
-    if (self.navigationItem.leftBarButtonItem) return;
-    self.editButtonItem.accessibilityLabel = @"Edit Button";
-    self.navigationItem.leftBarButtonItem = self.editButtonItem;
+    //    if (self.navigationItem.leftBarButtonItem) return;
+    //    self.editButtonItem.accessibilityLabel = @"Edit Button";
+    //    self.navigationItem.leftBarButtonItem = self.editButtonItem;
 }
 
 - (void)setupConversationQueryController
@@ -344,13 +349,10 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 - (void)configureCell:(UITableViewCell<ATLConversationPresenting> *)conversationCell atIndexPath:(NSIndexPath *)indexPath
 {
     LYRConversation *conversation = [self.queryController numberOfObjectsInSection:indexPath.section] ? [self.queryController objectAtIndexPath:indexPath] : nil;
-    if (conversation == nil) {
-        return;     // NOTE the early return if the conversation isn't found!
-    }
-    
     [conversationCell presentConversation:conversation];
     
     if (self.displaysAvatarItem) {
+        
         if ([self.dataSource respondsToSelector:@selector(conversationListViewController:avatarItemForConversation:)]) {
             id<ATLAvatarItem> avatarItem = [self.dataSource conversationListViewController:self avatarItemForConversation:conversation];
             [conversationCell updateWithAvatarItem:avatarItem];
@@ -377,6 +379,7 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 }
 
 #pragma mark - Reloading Conversations
+
 
 - (void)reloadCellForConversation:(LYRConversation *)conversation
 {
@@ -428,7 +431,8 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
             } else {
                 switch (deletionMode.integerValue) {
                     case LYRDeletionModeMyDevices:
-                        actionColor = [UIColor redColor];
+                        actionColor = [UIColor colorWithRed:39.0/255.0 green:170.0/255.0 blue:190.0/255.0 alpha:1.0];
+                        
                         break;
                     case LYRDeletionModeAllParticipants:
                         actionColor = [UIColor grayColor];
@@ -437,14 +441,79 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
                         break;
                 }
             }
-            UITableViewRowAction *deleteAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault title:actionString handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
-                [self deleteConversationAtIndexPath:indexPath withDeletionMode:deletionMode.integerValue];
+            
+            
+            //            UITableViewRowAction *deleteAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault title:actionString handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
+            //
+            //
+            //
+            //                [self deleteConversationAtIndexPath:indexPath withDeletionMode:deletionMode.integerValue];
+            //
+            //            }];
+            
+            
+            UITableViewRowAction *otherAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault title:@" Complete " handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
+                LYRConversation *conversation = [self.queryController objectAtIndexPath:indexPath];
+                
+                
+                ratingView = [[[NSBundle mainBundle] loadNibNamed:@"RatingView" owner:nil options:nil] firstObject];
+                ratingView.backgroundColor = [UIColor whiteColor];
+                
+                
+                
+                if (!UIAccessibilityIsReduceTransparencyEnabled()) {
+                    
+                    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
+                    blurEffectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+                    blurEffectView.frame = self.view.bounds;
+                    blurEffectView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+                    
+                    [self.view addSubview:blurEffectView];
+                }
+                
+                
+                UIButton *btnCancel = [ratingView viewWithTag:51];
+                UIButton *btnDone = [ratingView viewWithTag:52];
+                
+                indexpath = indexPath;
+                delMode = deletionMode.integerValue;
+                
+                [btnDone addTarget:self action:@selector(btnDoneClicked) forControlEvents:UIControlEventTouchUpInside];
+                [btnCancel addTarget:self action:@selector(btnCancelClicked) forControlEvents:UIControlEventTouchUpInside];
+                
+                ratingView.layer.cornerRadius = 10;
+                ratingView.layer.masksToBounds = YES;
+                ratingView.frame = CGRectMake(self.view.frame.origin.x + 20, self.view.frame.origin.y + 120, self.view.frame.size.width - 40, 200.0f);
+                
+                [self.view addSubview:ratingView];
+                [self.view bringSubviewToFront:ratingView];
+                
             }];
-            deleteAction.backgroundColor = actionColor;
-            [actions addObject:deleteAction];
+            //  deleteAction.backgroundColor = actionColor;
+            otherAction.backgroundColor = actionColor;
+            [actions addObject:otherAction];
+            //   [actions addObject:deleteAction];
+            
         }
     }
     return actions;
+}
+
+-(void)btnDoneClicked
+{
+    
+    [self.conDelegate btnDeleteClicked:ratingView rowno:indexpath.row];
+    [self deleteConversationAtIndexPath:indexpath withDeletionMode:delMode];
+    ratingView.removeFromSuperview;
+    blurEffectView.removeFromSuperview;
+    //    [self.view bringSubviewToFront:self.tableView];
+    
+}
+-(void) btnCancelClicked
+{
+    [self.conDelegate btnDeleteClicked:ratingView rowno:indexpath.row];
+    ratingView.removeFromSuperview;
+    blurEffectView.removeFromSuperview;
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
@@ -500,6 +569,7 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
         selectedConversation = [self.queryController objectAtIndexPath:indexPath];
     }
     self.conversationSelectedBeforeContentChange = selectedConversation;
+    [self.tableView beginUpdates];
 }
 
 - (void)queryController:(LYRQueryController *)controller
@@ -510,17 +580,22 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 {
     switch (type) {
         case LYRQueryControllerChangeTypeInsert:
-            [self.insertedRowIndexPaths addObject:newIndexPath];
+            [self.tableView insertRowsAtIndexPaths:@[newIndexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
             break;
         case LYRQueryControllerChangeTypeUpdate:
-            [self.updatedRowIndexPaths addObject:indexPath];
+            [self.tableView reloadRowsAtIndexPaths:@[indexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
             break;
         case LYRQueryControllerChangeTypeMove:
-            [self.deletedRowIndexPaths addObject:indexPath];
-            [self.insertedRowIndexPaths addObject:newIndexPath];
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            [self.tableView insertRowsAtIndexPaths:@[newIndexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
             break;
         case LYRQueryControllerChangeTypeDelete:
-            [self.deletedRowIndexPaths addObject:indexPath];
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
             break;
         default:
             break;
@@ -529,18 +604,10 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
 
 - (void)queryControllerDidChangeContent:(LYRQueryController *)queryController
 {
-    [self.tableView beginUpdates];
-    [self.tableView deleteRowsAtIndexPaths:self.deletedRowIndexPaths withRowAnimation:UITableViewRowAnimationAutomatic];
-    [self.tableView insertRowsAtIndexPaths:self.insertedRowIndexPaths withRowAnimation:UITableViewRowAnimationAutomatic];
-    [self.tableView reloadRowsAtIndexPaths:self.updatedRowIndexPaths withRowAnimation:UITableViewRowAnimationAutomatic];
     [self.tableView endUpdates];
     
-    self.insertedRowIndexPaths = nil;
-    self.deletedRowIndexPaths = nil;
-    self.updatedRowIndexPaths = nil;
-    
     [self configureLoadingMoreConversationsIndicatorView];
-
+    
     if (self.conversationSelectedBeforeContentChange) {
         NSIndexPath *indexPath = [self.queryController indexPathForObject:self.conversationSelectedBeforeContentChange];
         if (indexPath) {
@@ -548,21 +615,6 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
         }
         self.conversationSelectedBeforeContentChange = nil;
     }
-}
-
-- (NSMutableArray *)insertedRowIndexPaths
-{
-    return _insertedRowIndexPaths ?: (_insertedRowIndexPaths = [[NSMutableArray alloc] init]);
-}
-
-- (NSMutableArray *)deletedRowIndexPaths
-{
-    return _deletedRowIndexPaths ?: (_deletedRowIndexPaths = [[NSMutableArray alloc] init]);
-}
-
-- (NSMutableArray *)updatedRowIndexPaths
-{
-    return _updatedRowIndexPaths ?: (_updatedRowIndexPaths = [[NSMutableArray alloc] init]);
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -611,7 +663,7 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
         return;
     }
     self.showingMoreConversationsIndicator = moreConversationsAvailable;
-
+    
     // The indicator view is installed as the table's footer view. When no indicator is needed, install an empty view. This is required in order to suppress the dummy separator lines that UITableView draws to simulate empty rows.
     self.tableView.tableFooterView = self.showingMoreConversationsIndicator ? ATLMakeLoadingMoreConversationsIndicatorView() : [[UIView alloc] init];
 }
@@ -629,9 +681,9 @@ NSString *const ATLConversationListViewControllerDeletionModeEveryone = @"Everyo
         [self.delegate conversationListViewController:self didSearchForText:searchString completion:^(NSSet *filteredParticipants) {
             if (![searchString isEqualToString:self.searchController.searchBar.text]) return;
             NSSet *participantIdentifiers = [filteredParticipants valueForKey:@"userID"];
-
+            
             LYRPredicate *predicate = [LYRPredicate predicateWithProperty:@"participants" predicateOperator:LYRPredicateOperatorIsIn value:participantIdentifiers];
-
+            
             [self updateQueryControllerWithPredicate: predicate];
         }];
     }

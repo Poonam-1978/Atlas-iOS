@@ -73,6 +73,9 @@ static NSString *const ATLAddressBarParticipantAttributeName = @"ATLAddressBarPa
     self.tableView.rowHeight = 56;
     self.tableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
     self.tableView.hidden = YES;
+    //poonam
+    self.tableView.backgroundColor = [UIColor colorWithRed:242.0/255.0 green:242.0/255.0 blue:242.0/255.0 alpha:1.0];
+    //poonam
     [self.view addSubview:self.tableView];
     
     [self configureLayoutConstraintsForAddressBarView];

@@ -303,6 +303,11 @@ typedef NS_ENUM(NSInteger, ATLBubbleViewContentType) {
     [[UIMenuController sharedMenuController] setMenuItems:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
+- (void)setBackgroundColor:(UIColor *)backgroundColor
+{
+    [super setBackgroundColor:backgroundColor];
+}
+
 
 - (BOOL)canBecomeFirstResponder
 {

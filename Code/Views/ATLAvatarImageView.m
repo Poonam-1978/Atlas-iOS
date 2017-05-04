@@ -19,7 +19,7 @@
 //
 #import "ATLAvatarImageView.h"
 #import "ATLConstants.h"
-
+#import "ATLOutgoingMessageCollectionViewCell.h"
 @interface ATLAvatarImageView ()
 
 @property (nonatomic) UILabel *initialsLabel;
@@ -84,7 +84,11 @@ NSString *const ATLAvatarImageViewAccessibilityLabel = @"ATLAvatarImageViewAcces
     _initialsLabel.textAlignment = NSTextAlignmentCenter;
     _initialsLabel.adjustsFontSizeToFitWidth = YES;
     _initialsLabel.minimumScaleFactor = 0.75;
-    _initialsLabel.textColor = _initialsColor;
+    
+   // _initialsLabel.textColor = _initialsColor;
+    //poonam
+    _initialsLabel.textColor=[UIColor whiteColor];
+    //poonam
     _initialsLabel.font = _initialsFont;
     [self addSubview:_initialsLabel];
     [self configureInitialsLabelConstraint];
@@ -110,18 +114,39 @@ NSString *const ATLAvatarImageViewAccessibilityLabel = @"ATLAvatarImageViewAcces
 
 - (void)setAvatarItem:(id<ATLAvatarItem>)avatarItem
 {
-    self.image = nil;
+    //    if ([avatarItem avatarImageURL]) {
+    //        self.initialsLabel.text = nil;
+    //        [self loadAvatarImageWithURL:[avatarItem avatarImageURL]];
+    //
+    //    }
     
-    if ([avatarItem avatarImageURL]) {
+    //   else if (avatarItem.avatarImage) {
+    //        self.initialsLabel.text = nil;
+    //        self.image = avatarItem.avatarImage;
+    //    } else
+    //NSLog(@"%@",self.superview.superview);
+    if (avatarItem.avatarInitials)
+    {
+        self.image = nil;
+        self.backgroundColor=_initialsColor;
+        //poonam
+        if([self.superview.superview isKindOfClass:[ATLOutgoingMessageCollectionViewCell class]])
+        {
+            //self.initialsLabel.text = avatarItem.avatarInitials;
+            self.initialsLabel.text=avatarItem.avatarInitials;
+            
+        }
+        else
+        {
+            self.initialsLabel.text=avatarItem.avatarInitialOfUser;
+        }
+        //poonam
+    }
+    else if ([avatarItem avatarImageURL])
+    {
         self.initialsLabel.text = nil;
         [self loadAvatarImageWithURL:[avatarItem avatarImageURL]];
-    } else if (avatarItem.avatarImage) {
-        self.initialsLabel.text = nil;
-        self.image = avatarItem.avatarImage;
-    }
-    
-    if (self.image == nil && avatarItem.avatarInitials) {
-        self.initialsLabel.text = avatarItem.avatarInitials;
+        
     }
     _avatarItem = avatarItem;
 }

@@ -40,5 +40,7 @@
  @abstract Returns the avatar initials of the receiver.
  */
 @property (nonatomic, readonly, nullable) NSString *avatarInitials;
-
+//poonam
+@property (nonatomic, readonly, nullable) NSString *avatarInitialOfUser;
+//poonam
 @end
